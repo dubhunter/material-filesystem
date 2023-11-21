@@ -9,6 +9,7 @@ class FilesystemApp(cmd2.Cmd):
     def __init__(self) -> None:
         super().__init__()
 
+        # remove a bunch of default commands
         delattr(cmd2.Cmd, 'do_alias')
         delattr(cmd2.Cmd, 'do_edit')
         delattr(cmd2.Cmd, 'do_macro')
@@ -22,7 +23,7 @@ class FilesystemApp(cmd2.Cmd):
         self._update_prompt()
 
     def _update_prompt(self):
-        self.prompt = '{} $ '.format(self.fs.pwd())
+        self.prompt = cmd2.style('{} $ '.format(self.fs.pwd()), bold=True, dim=True)
 
     cd_parser = cmd2.Cmd2ArgumentParser()
     cd_parser.add_argument('path', help='path to change to')
@@ -46,6 +47,7 @@ class FilesystemApp(cmd2.Cmd):
         """List current working directory"""
         for item in self.fs.ls(args.long):
             if args.long:
+                # long results give us a tuple, but we only need the first letter of the type
                 self.poutput('{} {}'.format(item[0][:1], item[1]))
             else:
                 self.poutput(item)
