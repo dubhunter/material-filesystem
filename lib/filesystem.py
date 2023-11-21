@@ -78,8 +78,11 @@ class Filesystem:
     def pwd(self) -> str:
         return '/{}'.format('/'.join(self._stack))
 
-    def ls(self) -> List:
-        return list(self._cwd.children.keys())
+    def ls(self, long: bool = False) -> List:
+        if long:
+            return [(v.type, k) for k, v in self._cwd.children.items()]
+        else:
+            return list(self._cwd.children.keys())
 
     def mkdir(self, path: str, create_intermediate: bool = False):
         if '/' in path:

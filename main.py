@@ -37,10 +37,18 @@ class FilesystemApp(cmd2.Cmd):
         """Print working directory"""
         self.poutput(self.fs.pwd())
 
-    def do_ls(self, _):
+    ls_parser = cmd2.Cmd2ArgumentParser()
+    ls_parser.add_argument('-l', action='store_true', dest='long',
+                           help='show long list with type')
+
+    @cmd2.with_argparser(ls_parser)
+    def do_ls(self, args):
         """List current working directory"""
-        for item in self.fs.ls():
-            self.poutput(item)
+        for item in self.fs.ls(args.long):
+            if args.long:
+                self.poutput('{} {}'.format(item[0][:1], item[1]))
+            else:
+                self.poutput(item)
 
     mkdir_parser = cmd2.Cmd2ArgumentParser()
     mkdir_parser.add_argument('-p', action='store_true', dest='create_intermediate',

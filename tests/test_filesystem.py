@@ -237,6 +237,20 @@ class FilesystemTest(unittest.TestCase):
         # ensure both are in ls
         self.assertListEqual(self.fs.ls(), [dirname, filename])
 
+    def testListLong(self):
+        dirname = 'somedir'
+        filename = 'somefile'
+
+        # ensure initial ls is empty
+        self.assertListEqual(self.fs.ls(True), [])
+
+        # create dir and file
+        self.fs.mkdir(dirname)
+        self.fs.touch(filename)
+
+        # ensure both are in ls
+        self.assertListEqual(self.fs.ls(True), [('Directory', dirname), ('File', filename)])
+
     def testMakeDir(self):
         dirname = 'somedir'
 
