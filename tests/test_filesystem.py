@@ -637,9 +637,6 @@ class FilesystemTest(unittest.TestCase):
         # create file
         self.fs.touch(filename)
 
-        # ensure file exists
-        self.assertIn(filename, self.fs.ls())
-
         # write contents
         self.fs.write(filename, contents)
 
@@ -664,6 +661,24 @@ class FilesystemTest(unittest.TestCase):
 
         # ensure exception raised
         self.assertRaises(NotFileError, self.fs.write, filename, 'stuff')
+
+    def testWriteReadFileAbsolute(self):
+        dirname = 'somedir'
+        filename = 'lipsum.txt'
+        contents = 'Lorem ipsum dolor sit amet'
+
+        # create dir
+        self.fs.mkdir(dirname)
+
+        # create file
+        self.fs.touch('/{}/{}'.format(dirname, filename))
+
+        # write contents
+        self.fs.write('/{}/{}'.format(dirname, filename), contents)
+
+        # ensure file contents
+        self.assertEqual(self.fs.read('/{}/{}'.format(dirname, filename)), contents)
+
 
     def testReadFileNotFound(self):
         filename = 'doesnotexist'

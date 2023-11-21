@@ -147,26 +147,32 @@ class Filesystem:
             self._cwd.children[path] = File()
 
     def write(self, path: str, contents: str | Any):
-        try:
-            node = self._cwd.children[path]
-            if node.type != 'File':
-                # error if the name exists, but is not a file
-                raise NotFileError
-            node.contents = contents
-        except KeyError:
-            raise NotFoundError
+        if '/' in path:
+            self._absolute_action(path, self.write, contents)
+        else:
+            try:
+                node = self._cwd.children[path]
+                if node.type != 'File':
+                    # error if the name exists, but is not a file
+                    raise NotFileError
+                node.contents = contents
+            except KeyError:
+                raise NotFoundError
 
     def read(self, path: str) -> str | Any:
-        try:
-            node = self._cwd.children[path]
-            if node.type != 'File':
-                # error if the name exists, but is not a file
-                raise NotFileError
-            return node.contents
-        except KeyError:
-            raise NotFoundError
+        if '/' in path:
+            return self._absolute_action(path, self.read)
+        else:
+            try:
+                node = self._cwd.children[path]
+                if node.type != 'File':
+                    # error if the name exists, but is not a file
+                    raise NotFileError
+                return node.contents
+            except KeyError:
+                raise NotFoundError
 
-    def mv(self, src: str, dst: str, force: bool = False):
+    def mv(self, src: str, dst: str, force: bool = False):  # TODO: Support absolute paths
         if not force and dst in self._cwd.children:
             # don't allow overwriting unless forced
             node = self._cwd.children[dst]
@@ -179,7 +185,7 @@ class Filesystem:
         except KeyError:
             raise NotFoundError
 
-    def cp(self, src: str, dst: str, force: bool = False):
+    def cp(self, src: str, dst: str, force: bool = False):  # TODO: Support absolute paths
         if not force and dst in self._cwd.children:
             # don't allow overwriting unless forced
             node = self._cwd.children[dst]
