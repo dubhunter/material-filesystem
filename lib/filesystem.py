@@ -78,7 +78,7 @@ class Filesystem:
     def pwd(self) -> str:
         return '/{}'.format('/'.join(self._stack))
 
-    def ls(self, long: bool = False) -> List:
+    def ls(self, long: bool = False) -> List:  # TODO: Support absolute paths
         if long:
             # return a tuple with the type
             return [(v.type, k) for k, v in self._cwd.children.items()]
