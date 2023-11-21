@@ -2,7 +2,6 @@ from typing import Any, List
 
 from lib.directory import Directory
 from lib.exceptions import (
-    AlreadyExistsError,
     DirectoryAlreadyExistsError,
     DirectoryNotEmptyError,
     FileAlreadyExistsError,
