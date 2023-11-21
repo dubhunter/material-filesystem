@@ -13,8 +13,7 @@ class DirectoryNotEmptyError(FilesystemError):
 
 
 class AlreadyExistsError(FilesystemError):
-    def __init__(self, name):
-        super().__init__('"{}" already exists'.format(name))
+    pass
 
 
 class DirectoryAlreadyExistsError(AlreadyExistsError):
