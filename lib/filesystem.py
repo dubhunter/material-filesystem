@@ -6,8 +6,8 @@ from lib.exceptions import (
     DirectoryAlreadyExistsError,
     DirectoryNotEmptyError,
     FileAlreadyExistsError,
-    NotFileError,
-    NotFoundError
+    FilesystemError, NotFileError,
+    NotFoundError, RootError
 )
 from lib.file import File
 
@@ -53,7 +53,7 @@ class Filesystem:
                 # push all the parts of the path with a filter for no empty strings
                 for d in filter(None, path.split('/')):
                     self.pushdir(d)
-            except NotFoundError as e:
+            except FilesystemError as e:
                 # if we hit an exception we want to put the old stack back
                 self._stack = old_stack
                 raise e
@@ -74,20 +74,22 @@ class Filesystem:
             path = path.rstrip('/')
             # save the current stack to reset cwd
             old_stack = self._stack
-            if create_intermediate:
-                # start at root
-                self.cd('/')
-                # recurse for all the parts of the path with a filter for no empty strings
-                for d in filter(None, path.split('/')):
-                    self.mkdir(d)
-                    self.pushdir(d)
-            else:
-                parent, child = path.rsplit('/', 1)
-                self.cd(parent)
-                self.mkdir(child)
-
-            # put the old stack back
-            self._stack = old_stack
+            try:
+                if create_intermediate:
+                    # start at root
+                    self.cd('/')
+                    # recurse for all the parts of the path with a filter for no empty strings
+                    for d in filter(None, path.split('/')):
+                        self.mkdir(d)
+                        self.pushdir(d)
+                else:
+                    # if we aren't creating intermediates, try to change to parent then create (or error)
+                    parent, child = path.rsplit('/', 1)
+                    self.cd(parent)
+                    self.mkdir(child)
+            finally:
+                # make sure we put the old stack back
+                self._stack = old_stack
         else:
             if path in self._cwd.children:
                 node = self._cwd.children[path]

@@ -1,12 +1,16 @@
-class NotFoundError(Exception):
+class FilesystemError(Exception):
     pass
 
 
-class DirectoryNotEmptyError(Exception):
+class NotFoundError(FilesystemError):
     pass
 
 
-class AlreadyExistsError(Exception):
+class DirectoryNotEmptyError(FilesystemError):
+    pass
+
+
+class AlreadyExistsError(FilesystemError):
     pass
 
 
@@ -18,9 +22,13 @@ class FileAlreadyExistsError(AlreadyExistsError):
     pass
 
 
-class NotFileError(Exception):
+class NotFileError(FilesystemError):
     pass
 
 
-class NotDirectoryError(Exception):
+class NotDirectoryError(FilesystemError):
+    pass
+
+
+class RootError(FilesystemError):
     pass

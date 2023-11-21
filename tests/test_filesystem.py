@@ -335,6 +335,9 @@ class FilesystemTest(unittest.TestCase):
         # creation of third dir should error
         self.assertRaises(NotFoundError, self.fs.mkdir, '/{}/{}/{}'.format(firstdir, seconddir, thirddir))
 
+        # ensure still at root
+        self.assertEqual(self.fs.pwd(), '/')
+
     def testMakeDirAbsoluteIntermediateCreate(self):
         firstdir = 'first'
         seconddir = 'second'
@@ -350,6 +353,9 @@ class FilesystemTest(unittest.TestCase):
 
         # create third dir absolute without cd
         self.fs.mkdir('/{}/{}/{}'.format(firstdir, seconddir, thirddir), True)
+
+        # ensure still at root
+        self.assertEqual(self.fs.pwd(), '/')
 
         # change into second
         self.fs.cd('/{}/{}'.format(firstdir, seconddir))
