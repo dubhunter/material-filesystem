@@ -80,8 +80,10 @@ class Filesystem:
 
     def ls(self, long: bool = False) -> List:
         if long:
+            # return a tuple with the type
             return [(v.type, k) for k, v in self._cwd.children.items()]
         else:
+            # just return the keys
             return list(self._cwd.children.keys())
 
     def mkdir(self, path: str, create_intermediate: bool = False):
