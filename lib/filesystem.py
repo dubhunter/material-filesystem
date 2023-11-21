@@ -45,6 +45,7 @@ class Filesystem:
         elif '/' not in path:
             self.pushdir(path)
         else:
+            # the absolute case
             # save the current stack in case we hit an exception
             old_stack = self._stack
             self._stack = []
@@ -64,15 +65,39 @@ class Filesystem:
         return list(self._cwd.children.keys())
 
     def mkdir(self, path: str, create_intermediate: bool = False):
-        if path in self._cwd.children:
-            node = self._cwd.children[path]
-            if node.type == 'File':
-                # error if a file exists with the same name
-                raise FileAlreadyExistsError
-            else:
-                # if it's a dir, then  noop
+        if '/' in path:
+            # the absolute case
+            if path == '/':
+                # creating root is a noop
                 return
-        self._cwd.children[path] = Directory()
+            # ensure there is no trailing slash
+            path = path.rstrip('/')
+            # save the current stack to reset cwd
+            old_stack = self._stack
+            if create_intermediate:
+                # start at root
+                self.cd('/')
+                # recurse for all the parts of the path with a filter for no empty strings
+                for d in filter(None, path.split('/')):
+                    self.mkdir(d)
+                    self.pushdir(d)
+            else:
+                parent, child = path.rsplit('/', 1)
+                self.cd(parent)
+                self.mkdir(child)
+
+            # put the old stack back
+            self._stack = old_stack
+        else:
+            if path in self._cwd.children:
+                node = self._cwd.children[path]
+                if node.type == 'File':
+                    # error if a file exists with the same name
+                    raise FileAlreadyExistsError
+                else:
+                    # if it's a dir, then  noop
+                    return
+            self._cwd.children[path] = Directory()
 
     def rm(self, path: str, force: bool = False):
         try:

@@ -290,6 +290,73 @@ class FilesystemTest(unittest.TestCase):
         # create dir throws error
         self.assertRaises(FileAlreadyExistsError, self.fs.mkdir, dirname)
 
+    def testMakeDirAbsolute(self):
+        firstdir = 'first'
+        seconddir = 'second'
+
+        # ensure dir does not exist
+        self.assertNotIn(firstdir, self.fs.ls())
+
+        # create first dir
+        self.fs.mkdir(firstdir)
+
+        # ensure dir exists
+        self.assertIn(firstdir, self.fs.ls())
+
+        # create second dir absolute without cd
+        self.fs.mkdir('/{}/{}'.format(firstdir, seconddir))
+
+        # change into first
+        self.fs.pushdir(firstdir)
+
+        # ensure dir exists
+        self.assertIn(seconddir, self.fs.ls())
+
+    def testMakeDirAbsoluteRoot(self):
+        # try to create root
+        self.fs.mkdir('/')
+
+        # ensure still at root
+        self.assertEqual(self.fs.pwd(), '/')
+
+    def testMakeDirAbsoluteIntermediateError(self):
+        firstdir = 'first'
+        seconddir = 'second'
+        thirddir = 'third'
+
+        # create first dir
+        self.fs.mkdir(firstdir)
+
+        # ensure second dir does not exist in first
+        self.fs.pushdir(firstdir)
+        self.assertNotIn(seconddir, self.fs.ls())
+        self.fs.popdir()
+
+        # creation of third dir should error
+        self.assertRaises(NotFoundError, self.fs.mkdir, '/{}/{}/{}'.format(firstdir, seconddir, thirddir))
+
+    def testMakeDirAbsoluteIntermediateCreate(self):
+        firstdir = 'first'
+        seconddir = 'second'
+        thirddir = 'third'
+
+        # create first dir
+        self.fs.mkdir(firstdir)
+
+        # ensure second dir does not exist in first
+        self.fs.pushdir(firstdir)
+        self.assertNotIn(seconddir, self.fs.ls())
+        self.fs.popdir()
+
+        # create third dir absolute without cd
+        self.fs.mkdir('/{}/{}/{}'.format(firstdir, seconddir, thirddir), True)
+
+        # change into second
+        self.fs.cd('/{}/{}'.format(firstdir, seconddir))
+
+        # ensure dir exists
+        self.assertIn(thirddir, self.fs.ls())
+
     def testRemoveDir(self):
         dirname = 'somedir'
 
