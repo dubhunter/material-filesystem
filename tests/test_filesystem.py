@@ -313,6 +313,9 @@ class FilesystemTest(unittest.TestCase):
         # create second dir absolute without cd
         self.fs.mkdir('/{}/{}'.format(firstdir, seconddir))
 
+        # ensure still at root
+        self.assertEqual(self.fs.pwd(), '/')
+
         # change into first
         self.fs.pushdir(firstdir)
 
@@ -471,7 +474,7 @@ class FilesystemTest(unittest.TestCase):
         # remove second dir abosule
         self.fs.rm('/{}/{}'.format(firstdir, seconddir))
 
-        # ensure back to root
+        # ensure still at root
         self.assertEqual(self.fs.pwd(), '/')
 
         # change into first and ensure cwd
@@ -679,6 +682,26 @@ class FilesystemTest(unittest.TestCase):
         # ensure file contents
         self.assertEqual(self.fs.read('/{}/{}'.format(dirname, filename)), contents)
 
+        # ensure still at root
+        self.assertEqual(self.fs.pwd(), '/')
+
+    def testWriteFileAbsoluteNotFound(self):
+        dirname = 'somedir'
+        filename = 'doesnotexist'
+
+        # create dir
+        self.fs.mkdir(dirname)
+
+        # change dir and ensure file does not exist
+        self.fs.pushdir(dirname)
+        self.assertNotIn(filename, self.fs.ls())
+        self.fs.popdir()
+
+        # ensure exception raised
+        self.assertRaises(NotFoundError, self.fs.write, '/{}/{}'.format(dirname, filename), 'stuff')
+
+        # ensure still at root
+        self.assertEqual(self.fs.pwd(), '/')
 
     def testReadFileNotFound(self):
         filename = 'doesnotexist'
@@ -698,6 +721,24 @@ class FilesystemTest(unittest.TestCase):
 
         # ensure exception raised
         self.assertRaises(NotFileError, self.fs.read, filename)
+
+    def testReadFileAbsoluteNotFound(self):
+        dirname = 'somedir'
+        filename = 'doesnotexist'
+
+        # create dir
+        self.fs.mkdir(dirname)
+
+        # change dir and ensure file does not exist
+        self.fs.pushdir(dirname)
+        self.assertNotIn(filename, self.fs.ls())
+        self.fs.popdir()
+
+        # ensure exception raised
+        self.assertRaises(NotFoundError, self.fs.read, '/{}/{}'.format(dirname, filename))
+
+        # ensure still at root
+        self.assertEqual(self.fs.pwd(), '/')
 
     def testMoveDir(self):
         src = 'old'
