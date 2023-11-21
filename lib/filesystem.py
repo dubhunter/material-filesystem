@@ -18,6 +18,7 @@ class Filesystem:
         self._stack = []
 
     @property
+    # get the current working directory by walking the stack
     def _cwd(self) -> Directory:
         d = self._root
         # this is the one part about the stack I don't love...the iteration here
@@ -36,8 +37,10 @@ class Filesystem:
 
     def cd(self, path: str):
         if path == '.':
+            # change to current dir is a noop
             return
         if path == '..':
+            # shortcut for popdir
             self.popdir()
         elif '/' not in path:
             self.pushdir(path)
@@ -120,8 +123,6 @@ class Filesystem:
                 raise FileAlreadyExistsError
             elif node.type == 'Directory':
                 raise DirectoryAlreadyExistsError
-            else:
-                raise AlreadyExistsError
         try:
             self._cwd.children[dst] = self._cwd.children.pop(src)
         except KeyError:
@@ -135,8 +136,6 @@ class Filesystem:
                 raise FileAlreadyExistsError
             elif node.type == 'Directory':
                 raise DirectoryAlreadyExistsError
-            else:
-                raise AlreadyExistsError
         try:
             self._cwd.children[dst] = self._cwd.children[src]
         except KeyError:

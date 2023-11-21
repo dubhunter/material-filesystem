@@ -652,7 +652,7 @@ class FilesystemTest(unittest.TestCase):
         self.assertNotIn(dirname, self.fs.ls())
 
         # ensure exception raised
-        self.assertRaises(NotFoundError, self.fs.mv, dirname, 'new')
+        self.assertRaises(NotFoundError, self.fs.cp, dirname, 'new')
 
     def testCopyDirCollision(self):
         src = 'old'
@@ -666,7 +666,7 @@ class FilesystemTest(unittest.TestCase):
         self.assertListEqual(self.fs.ls(), [src, dst])
 
         # ensure exception raised
-        self.assertRaises(DirectoryAlreadyExistsError, self.fs.mv, src, dst)
+        self.assertRaises(DirectoryAlreadyExistsError, self.fs.cp, src, dst)
 
     def testCopyDirCollisionOverwrite(self):
         src = 'old'
@@ -724,7 +724,7 @@ class FilesystemTest(unittest.TestCase):
         self.assertNotIn(filename, self.fs.ls())
 
         # ensure exception raised
-        self.assertRaises(NotFoundError, self.fs.mv, filename, 'new')
+        self.assertRaises(NotFoundError, self.fs.cp, filename, 'new')
 
     def testCopyFileCollision(self):
         src = 'old'
@@ -738,7 +738,7 @@ class FilesystemTest(unittest.TestCase):
         self.assertListEqual(self.fs.ls(), [src, dst])
 
         # ensure exception raised
-        self.assertRaises(FileAlreadyExistsError, self.fs.mv, src, dst)
+        self.assertRaises(FileAlreadyExistsError, self.fs.cp, src, dst)
 
     def testCopyFileCollisionOverwrite(self):
         src = 'old'
