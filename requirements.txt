@@ -1,0 +1,5 @@
+attrs
+cmd2
+coverage
+pyperclip
+wcwidth
