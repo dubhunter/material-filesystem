@@ -26,6 +26,24 @@ class Filesystem:
             d = d.children[name]
         return d
 
+    def _absolute_action(self, path: str, action: callable, *args) -> Any:
+        # save the current stack to reset cwd
+        # the absolute case
+        if path == '/':
+            # you action on root
+            raise RootError
+        # ensure there is no trailing slash
+        path = path.rstrip('/')
+        old_stack = self._stack
+        try:
+            # try to change to parent then act (or error)
+            parent, child = path.rsplit('/', 1)
+            self.cd(parent)
+            return action(child, *args)
+        finally:
+            # make sure we put the old stack back
+            self._stack = old_stack
+
     def pushdir(self, directory: str):
         if directory not in self._cwd.children:
             raise NotFoundError
@@ -75,7 +93,7 @@ class Filesystem:
             # save the current stack to reset cwd
             old_stack = self._stack
             try:
-                if create_intermediate:
+                if create_intermediate:  # TODO: because of this case, we cannot use self._absolute_action()
                     # start at root
                     self.cd('/')
                     # recurse for all the parts of the path with a filter for no empty strings
@@ -103,20 +121,7 @@ class Filesystem:
 
     def rm(self, path: str, force: bool = False):
         if '/' in path:
-            # save the current stack to reset cwd
-            old_stack = self._stack
-            try:
-                # the absolute case
-                if path == '/':
-                    # do not allow removal of root
-                    raise RootError
-                # try to change to parent then create (or error)
-                parent, child = path.rsplit('/', 1)
-                self.cd(parent)
-                self.rm(child)
-            finally:
-                # make sure we put the old stack back
-                self._stack = old_stack
+            self._absolute_action(path, self.rm, force)
         else:
             try:
                 node = self._cwd.children[path]

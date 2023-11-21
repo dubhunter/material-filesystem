@@ -493,6 +493,43 @@ class FilesystemTest(unittest.TestCase):
         # ensure still at root
         self.assertEqual(self.fs.pwd(), '/')
 
+    def testRemoveDirAbsoluteNotEmptyForce(self):
+        dirname = 'notempty'
+        child = 'child'
+
+        # create parent directory
+        self.fs.mkdir('/{}/{}'.format(dirname, dirname), True)
+
+        # change directory
+        self.fs.cd('/{}/{}'.format(dirname, dirname))
+
+        # ensure cwd
+        self.assertEqual(self.fs.pwd(), '/{}/{}'.format(dirname, dirname))
+
+        # create child dir
+        self.fs.mkdir(child)
+
+        # ensure child dir exists
+        self.assertIn(child, self.fs.ls())
+
+        # change directory to root
+        self.fs.cd('/')
+
+        # ensure cwd
+        self.assertEqual(self.fs.pwd(), '/')
+
+        # remove parent dir (forced)
+        self.fs.rm('/{}/{}'.format(dirname, dirname), True)
+
+        # change into first dir
+        self.fs.pushdir(dirname)
+
+        # ensure cwd
+        self.assertEqual(self.fs.pwd(), '/{}'.format(dirname))
+
+        # ensure parent dir does not exist
+        self.assertNotIn(dirname, self.fs.ls())
+
     def testRemoveFile(self):
         filename = 'somefile'
 
