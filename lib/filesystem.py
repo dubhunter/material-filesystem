@@ -20,6 +20,7 @@ class Filesystem:
     @property
     def _cwd(self) -> Directory:
         d = self._root
+        # this is the one part about the stack I don't love...the iteration here
         for name in self._stack:
             d = d.children[name]
         return d
@@ -63,14 +64,17 @@ class Filesystem:
         if path in self._cwd.children:
             node = self._cwd.children[path]
             if node.type == 'File':
+                # error if a file exists with the same name
                 raise FileAlreadyExistsError
             else:
+                # if it's a dir, then  noop
                 return
         self._cwd.children[path] = Directory()
 
     def rm(self, path: str, force: bool = False):
         try:
             node = self._cwd.children[path]
+            # don't allow removing non-empty dirs unless forced (rm -f)
             if not force and node.type == 'Directory' and len(node.children) > 0:
                 raise DirectoryNotEmptyError
             del self._cwd.children[path]
@@ -81,8 +85,10 @@ class Filesystem:
         if path in self._cwd.children:
             node = self._cwd.children[path]
             if node.type == 'Directory':
+                # error if a dir exists with the same name
                 raise DirectoryAlreadyExistsError
             else:
+                # if it's a file, then  noop
                 return
         self._cwd.children[path] = File()
 
@@ -90,6 +96,7 @@ class Filesystem:
         try:
             node = self._cwd.children[path]
             if node.type != 'File':
+                # error if the name exists, but is not a file
                 raise NotFileError
             node.contents = contents
         except KeyError:
@@ -99,6 +106,7 @@ class Filesystem:
         try:
             node = self._cwd.children[path]
             if node.type != 'File':
+                # error if the name exists, but is not a file
                 raise NotFileError
             return node.contents
         except KeyError:
@@ -106,6 +114,7 @@ class Filesystem:
 
     def mv(self, src: str, dst: str, force: bool = False):
         if not force and dst in self._cwd.children:
+            # don't allow overwriting unless forced
             node = self._cwd.children[dst]
             if node.type == 'File':
                 raise FileAlreadyExistsError
@@ -120,6 +129,7 @@ class Filesystem:
 
     def cp(self, src: str, dst: str, force: bool = False):
         if not force and dst in self._cwd.children:
+            # don't allow overwriting unless forced
             node = self._cwd.children[dst]
             if node.type == 'File':
                 raise FileAlreadyExistsError
@@ -132,13 +142,14 @@ class Filesystem:
         except KeyError:
             raise NotFoundError
 
-    def find(self, name: str, fuzzy: bool = False) -> List:
+    def find(self, name: str, fuzzy: bool = False) -> List[str]:
         results = []
         if fuzzy:
             for k in self.ls():
                 if name in k:
                     results.append(k)
         else:
+            # if not fuzzy, hopefully this is more performant than iteration
             if name in self.ls():
                 results.append(name)
         return results
