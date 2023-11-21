@@ -102,14 +102,30 @@ class Filesystem:
             self._cwd.children[path] = Directory()
 
     def rm(self, path: str, force: bool = False):
-        try:
-            node = self._cwd.children[path]
-            # don't allow removing non-empty dirs unless forced (rm -f)
-            if not force and node.type == 'Directory' and len(node.children) > 0:
-                raise DirectoryNotEmptyError
-            del self._cwd.children[path]
-        except KeyError:
-            raise NotFoundError
+        if '/' in path:
+            # save the current stack to reset cwd
+            old_stack = self._stack
+            try:
+                # the absolute case
+                if path == '/':
+                    # do not allow removal of root
+                    raise RootError
+                # try to change to parent then create (or error)
+                parent, child = path.rsplit('/', 1)
+                self.cd(parent)
+                self.rm(child)
+            finally:
+                # make sure we put the old stack back
+                self._stack = old_stack
+        else:
+            try:
+                node = self._cwd.children[path]
+                # don't allow removing non-empty dirs unless forced (rm -f)
+                if not force and node.type == 'Directory' and len(node.children) > 0:
+                    raise DirectoryNotEmptyError
+                del self._cwd.children[path]
+            except KeyError:
+                raise NotFoundError
 
     def touch(self, path: str):
         if path in self._cwd.children:

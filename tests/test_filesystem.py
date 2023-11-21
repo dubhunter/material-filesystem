@@ -5,7 +5,7 @@ from lib.exceptions import (
     DirectoryNotEmptyError,
     FileAlreadyExistsError,
     NotFileError,
-    NotFoundError
+    NotFoundError, RootError
 )
 from lib.filesystem import Filesystem
 
@@ -290,6 +290,13 @@ class FilesystemTest(unittest.TestCase):
         # create dir throws error
         self.assertRaises(FileAlreadyExistsError, self.fs.mkdir, dirname)
 
+    def testMakeDirAbsoluteRoot(self):
+        # try to create root
+        self.fs.mkdir('/')
+
+        # ensure still at root
+        self.assertEqual(self.fs.pwd(), '/')
+
     def testMakeDirAbsolute(self):
         firstdir = 'first'
         seconddir = 'second'
@@ -311,13 +318,6 @@ class FilesystemTest(unittest.TestCase):
 
         # ensure dir exists
         self.assertIn(seconddir, self.fs.ls())
-
-    def testMakeDirAbsoluteRoot(self):
-        # try to create root
-        self.fs.mkdir('/')
-
-        # ensure still at root
-        self.assertEqual(self.fs.pwd(), '/')
 
     def testMakeDirAbsoluteIntermediateError(self):
         firstdir = 'first'
@@ -400,7 +400,7 @@ class FilesystemTest(unittest.TestCase):
         # change directory
         self.fs.pushdir(dirname)
 
-        # ensure CWD
+        # ensure cwd
         self.assertEqual(self.fs.pwd(), '/{}'.format(dirname))
 
         # create child dir
@@ -412,11 +412,86 @@ class FilesystemTest(unittest.TestCase):
         # change directory to root
         self.fs.popdir()
 
-        # ensure CWD
+        # ensure cwd
         self.assertEqual(self.fs.pwd(), '/')
 
         # remove dir
         self.assertRaises(DirectoryNotEmptyError, self.fs.rm, dirname)
+
+    def testRemoveDirNotEmptyForce(self):
+        parent = 'notempty'
+        child = 'child'
+
+        # create parent directory
+        self.fs.mkdir(parent)
+
+        # ensure parent dir exists
+        self.assertIn(parent, self.fs.ls())
+
+        # change directory
+        self.fs.pushdir(parent)
+
+        # ensure cwd
+        self.assertEqual(self.fs.pwd(), '/{}'.format(parent))
+
+        # create child dir
+        self.fs.mkdir(child)
+
+        # ensure child dir exists
+        self.assertIn(child, self.fs.ls())
+
+        # change directory to root
+        self.fs.popdir()
+
+        # ensure cwd
+        self.assertEqual(self.fs.pwd(), '/')
+
+        # remove parent dir (forced)
+        self.fs.rm(parent, True)
+
+        # ensure parent dir does not exist
+        self.assertNotIn(parent, self.fs.ls())
+
+    def testRemoveDirAbsoluteRoot(self):
+        # ensure error
+        self.assertRaises(RootError, self.fs.rm, '/')
+
+    def testRemoveDirAbsolute(self):
+        firstdir = 'first'
+        seconddir = 'second'
+
+        # create dirs
+        self.fs.mkdir('/{}/{}'.format(firstdir, seconddir), True)
+
+        # change into first and ensure second
+        self.fs.pushdir(firstdir)
+        self.assertIn(seconddir, self.fs.ls())
+        self.fs.popdir()
+
+        # remove second dir abosule
+        self.fs.rm('/{}/{}'.format(firstdir, seconddir))
+
+        # ensure back to root
+        self.assertEqual(self.fs.pwd(), '/')
+
+        # change into first and ensure cwd
+        self.fs.pushdir(firstdir)
+        self.assertEqual(self.fs.pwd(), '/{}'.format(firstdir))
+
+        # ensure second dir does not exist
+        self.assertNotIn(seconddir, self.fs.ls())
+
+    def testRemoveDirAbsoluteError(self):
+        dirname = 'doesnotexist'
+
+        # ensure dir does not exist
+        self.assertNotIn(dirname, self.fs.ls())
+
+        # remove dir
+        self.assertRaises(NotFoundError, self.fs.rm, '/{}'.format(dirname))
+
+        # ensure still at root
+        self.assertEqual(self.fs.pwd(), '/')
 
     def testRemoveFile(self):
         filename = 'somefile'
@@ -441,40 +516,6 @@ class FilesystemTest(unittest.TestCase):
 
         # remove file
         self.assertRaises(NotFoundError, self.fs.rm, filename)
-
-    def testRemoveDirNotEmptyForce(self):
-        parent = 'notempty'
-        child = 'child'
-
-        # create parent directory
-        self.fs.mkdir(parent)
-
-        # ensure parent dir exists
-        self.assertIn(parent, self.fs.ls())
-
-        # change directory
-        self.fs.pushdir(parent)
-
-        # ensure CWD
-        self.assertEqual(self.fs.pwd(), '/{}'.format(parent))
-
-        # create child dir
-        self.fs.mkdir(child)
-
-        # ensure child dir exists
-        self.assertIn(child, self.fs.ls())
-
-        # change directory to root
-        self.fs.popdir()
-
-        # ensure CWD
-        self.assertEqual(self.fs.pwd(), '/')
-
-        # remove parent dir (forced)
-        self.fs.rm(parent, True)
-
-        # ensure parent dir does not exist
-        self.assertNotIn(parent, self.fs.ls())
 
     def testCreateFile(self):
         filename = 'empty.txt'
