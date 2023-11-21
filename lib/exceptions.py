@@ -6,11 +6,15 @@ class DirectoryNotEmptyError(Exception):
     pass
 
 
-class DirectoryAlreadyExistsError(Exception):
+class AlreadyExistsError(Exception):
     pass
 
 
-class FileAlreadyExistsError(Exception):
+class DirectoryAlreadyExistsError(AlreadyExistsError):
+    pass
+
+
+class FileAlreadyExistsError(AlreadyExistsError):
     pass
 
 

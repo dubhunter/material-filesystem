@@ -1,7 +1,12 @@
 import unittest
 
-from lib.exceptions import DirectoryAlreadyExistsError, DirectoryNotEmptyError, FileAlreadyExistsError, NotFileError, \
+from lib.exceptions import (
+    DirectoryAlreadyExistsError,
+    DirectoryNotEmptyError,
+    FileAlreadyExistsError,
+    NotFileError,
     NotFoundError
+)
 from lib.filesystem import Filesystem
 
 
@@ -12,7 +17,69 @@ class FilesystemTest(unittest.TestCase):
 
         self.fs = Filesystem()
 
-    def testChangeDirectory(self):
+    def testPushDirectory(self):
+        dirname = 'somedir'
+
+        # ensure root PWD
+        self.assertEqual(self.fs.pwd(), '/')
+
+        # create & change dir
+        self.fs.mkdir(dirname)
+        self.fs.pushdir(dirname)
+
+        # ensure dir PWD
+        self.assertEqual(self.fs.pwd(), '/{}'.format(dirname))
+
+        # create & change dir
+        self.fs.mkdir(dirname)
+        self.fs.pushdir(dirname)
+
+        # ensure subdir PWD
+        self.assertEqual(self.fs.pwd(), '/{}/{}'.format(dirname, dirname))
+
+    def testPushDirectoryDoesNotExist(self):
+        dirname = 'doesnotexist'
+
+        # ensure dir does not exist
+        self.assertNotIn(dirname, self.fs.ls())
+
+        # remove dir
+        self.assertRaises(NotFoundError, self.fs.pushdir, dirname)
+
+    def testPopDirectory(self):
+        dirname = 'somedir'
+
+        # ensure root PWD
+        self.assertEqual(self.fs.pwd(), '/')
+
+        # create & change dir twice
+        self.fs.mkdir(dirname)
+        self.fs.pushdir(dirname)
+        self.fs.mkdir(dirname)
+        self.fs.pushdir(dirname)
+
+        # ensure subdir PWD
+        self.assertEqual(self.fs.pwd(), '/{}/{}'.format(dirname, dirname))
+
+        # change up one
+        self.fs.popdir()
+
+        # ensure dir PWD
+        self.assertEqual(self.fs.pwd(), '/{}'.format(dirname))
+
+        # change up one
+        self.fs.popdir()
+
+        # ensure root PWD
+        self.assertEqual(self.fs.pwd(), '/')
+
+        # change up one
+        self.fs.popdir()
+
+        # ensure still at root PWD
+        self.assertEqual(self.fs.pwd(), '/')
+
+    def testChangeDirectoryRelative(self):
         dirname = 'somedir'
 
         # ensure root PWD
@@ -32,6 +99,31 @@ class FilesystemTest(unittest.TestCase):
         # ensure subdir PWD
         self.assertEqual(self.fs.pwd(), '/{}/{}'.format(dirname, dirname))
 
+        # change to current
+        self.fs.cd('.')
+
+        # ensure no change PWD
+        self.assertEqual(self.fs.pwd(), '/{}/{}'.format(dirname, dirname))
+
+        # change up one
+        self.fs.cd('..')
+
+        # ensure dir PWD
+        self.assertEqual(self.fs.pwd(), '/{}'.format(dirname))
+
+        # change up one
+        self.fs.cd('..')
+
+        # ensure root PWD
+        self.assertEqual(self.fs.pwd(), '/')
+
+    def testChangeDirRootParent(self):
+        # change up one
+        self.fs.cd('..')
+
+        # ensure still at root PWD
+        self.assertEqual(self.fs.pwd(), '/')
+
     def testChangeDirectoryDoesNotExist(self):
         dirname = 'doesnotexist'
 
@@ -41,7 +133,7 @@ class FilesystemTest(unittest.TestCase):
         # remove dir
         self.assertRaises(NotFoundError, self.fs.cd, dirname)
 
-    def testPrintWorkingDir(self):
+    def testChangeDirectoryAbsolute(self):
         dirname = 'somedir'
 
         # ensure root PWD
@@ -57,6 +149,65 @@ class FilesystemTest(unittest.TestCase):
         # create & change dir
         self.fs.mkdir(dirname)
         self.fs.cd(dirname)
+
+        # ensure subdir PWD
+        self.assertEqual(self.fs.pwd(), '/{}/{}'.format(dirname, dirname))
+
+        # change to root
+        self.fs.cd('/')
+
+        # ensure root PWD
+        self.assertEqual(self.fs.pwd(), '/')
+
+        # change two deep
+        self.fs.cd('/{}/{}'.format(dirname, dirname))
+
+        # ensure subdir PWD
+        self.assertEqual(self.fs.pwd(), '/{}/{}'.format(dirname, dirname))
+
+    def testChangeDirectoryAbsoluteNotFound(self):
+        dirname = 'somedir'
+
+        # ensure root PWD
+        self.assertEqual(self.fs.pwd(), '/')
+
+        # create & change dirs
+        self.fs.mkdir(dirname)
+        self.fs.cd(dirname)
+        self.fs.mkdir(dirname)
+        self.fs.cd(dirname)
+
+        # ensure subdir PWD
+        self.assertEqual(self.fs.pwd(), '/{}/{}'.format(dirname, dirname))
+
+        # change to root
+        self.fs.popdir()
+
+        # ensure dir PWD
+        self.assertEqual(self.fs.pwd(), '/{}'.format(dirname))
+
+        # change two deep (doesn't exist), ensure exception
+        self.assertRaises(NotFoundError, self.fs.cd, '/{}/{}'.format(dirname, 'nope'))
+
+        # ensure still dir PWD
+        self.assertEqual(self.fs.pwd(), '/{}'.format(dirname))
+
+    def testPrintWorkingDir(self):
+        dirname = 'somedir'
+
+        # ensure root PWD
+        self.assertEqual(self.fs.pwd(), '/')
+
+        # create & change dir
+        self.fs.mkdir(dirname)
+        self.fs.pushdir(dirname)
+
+        # ensure dir PWD
+        self.assertEqual(self.fs.pwd(), '/{}'.format(dirname))
+
+        # create & change dir
+        self.fs.mkdir(dirname)
+        self.fs.pushdir(dirname)
 
         # ensure subdir PWD
         self.assertEqual(self.fs.pwd(), '/{}/{}'.format(dirname, dirname))
@@ -109,7 +260,7 @@ class FilesystemTest(unittest.TestCase):
         self.assertIn(dirname, self.fs.ls())
 
         # change to directory
-        self.fs.cd(dirname)
+        self.fs.pushdir(dirname)
 
         # create child dir
         self.fs.mkdir(child)
@@ -118,13 +269,13 @@ class FilesystemTest(unittest.TestCase):
         self.assertIn(child, self.fs.ls())
 
         # change to parent directory
-        self.fs.cd('..')
+        self.fs.popdir()
 
         # create dir does not throw error
         self.fs.mkdir(dirname)
 
         # change dir
-        self.fs.cd(dirname)
+        self.fs.pushdir(dirname)
 
         # ensure child still exists
         self.assertIn(child, self.fs.ls())
@@ -174,7 +325,7 @@ class FilesystemTest(unittest.TestCase):
         self.assertIn(dirname, self.fs.ls())
 
         # change directory
-        self.fs.cd(dirname)
+        self.fs.pushdir(dirname)
 
         # ensure CWD
         self.assertEqual(self.fs.pwd(), '/{}'.format(dirname))
@@ -186,7 +337,7 @@ class FilesystemTest(unittest.TestCase):
         self.assertIn(child, self.fs.ls())
 
         # change directory to root
-        self.fs.cd('..')
+        self.fs.popdir()
 
         # ensure CWD
         self.assertEqual(self.fs.pwd(), '/')
@@ -229,7 +380,7 @@ class FilesystemTest(unittest.TestCase):
         self.assertIn(parent, self.fs.ls())
 
         # change directory
-        self.fs.cd(parent)
+        self.fs.pushdir(parent)
 
         # ensure CWD
         self.assertEqual(self.fs.pwd(), '/{}'.format(parent))
@@ -241,7 +392,7 @@ class FilesystemTest(unittest.TestCase):
         self.assertIn(child, self.fs.ls())
 
         # change directory to root
-        self.fs.cd('..')
+        self.fs.popdir()
 
         # ensure CWD
         self.assertEqual(self.fs.pwd(), '/')
@@ -371,6 +522,251 @@ class FilesystemTest(unittest.TestCase):
 
         # ensure exception raised
         self.assertRaises(NotFoundError, self.fs.mv, dirname, 'new')
+
+    def testMoveDirCollision(self):
+        src = 'old'
+        dst = 'new'
+
+        # create dirs
+        self.fs.mkdir(src)
+        self.fs.mkdir(dst)
+
+        # ensure dir exists
+        self.assertListEqual(self.fs.ls(), [src, dst])
+
+        # ensure exception raised
+        self.assertRaises(DirectoryAlreadyExistsError, self.fs.mv, src, dst)
+
+    def testMoveDirCollisionOverwrite(self):
+        src = 'old'
+        dst = 'new'
+        filename = 'sentinel'
+
+        # create dirs
+        self.fs.mkdir(src)
+        self.fs.mkdir(dst)
+
+        # ensure dirs exists
+        self.assertListEqual(self.fs.ls(), [src, dst])
+
+        # create a file in src to check for later
+        self.fs.pushdir(src)
+        self.fs.touch(filename)
+        self.assertIn(filename, self.fs.ls())
+        self.fs.popdir()
+
+        # move dir
+        self.fs.mv(src, dst, True)
+
+        # ensure dirs exist
+        self.assertListEqual(self.fs.ls(), [dst])
+
+        # change into new name and check for sentinel file
+        self.fs.pushdir(dst)
+        self.assertIn(filename, self.fs.ls())
+
+    def testMoveFile(self):
+        src = 'old'
+        dst = 'new'
+
+        # create file
+        self.fs.touch(src)
+
+        # ensure file exists
+        self.assertListEqual(self.fs.ls(), [src])
+
+        # move file
+        self.fs.mv(src, dst)
+
+        # ensure ensure new name
+        self.assertEqual(self.fs.ls(), [dst])
+
+    def testMoveFileNotFound(self):
+        filename = 'doesnotexist'
+
+        # ensure file does not exist
+        self.assertNotIn(filename, self.fs.ls())
+
+        # ensure exception raised
+        self.assertRaises(NotFoundError, self.fs.mv, filename, 'new')
+
+    def testMoveFileCollision(self):
+        src = 'old'
+        dst = 'new'
+
+        # create files
+        self.fs.touch(src)
+        self.fs.touch(dst)
+
+        # ensure file exists
+        self.assertListEqual(self.fs.ls(), [src, dst])
+
+        # ensure exception raised
+        self.assertRaises(FileAlreadyExistsError, self.fs.mv, src, dst)
+
+    def testMoveFileCollisionOverwrite(self):
+        src = 'old'
+        dst = 'new'
+        contents = 'sentinel'
+
+        # create files
+        self.fs.touch(src)
+        self.fs.touch(dst)
+
+        # ensure files exist
+        self.assertListEqual(self.fs.ls(), [src, dst])
+
+        # add contents to src to check for later
+        self.fs.write(src, contents)
+        self.assertEqual(self.fs.read(src), contents)
+
+        # move file
+        self.fs.mv(src, dst, True)
+
+        # ensure files exists
+        self.assertListEqual(self.fs.ls(), [dst])
+
+        # read new name and check for sentinel value
+        self.assertEqual(self.fs.read(dst), contents)
+
+    def testCopyDir(self):
+        src = 'old'
+        dst = 'new'
+
+        # create dir
+        self.fs.mkdir(src)
+
+        # ensure dir exists
+        self.assertListEqual(self.fs.ls(), [src])
+
+        # move dir
+        self.fs.cp(src, dst)
+
+        # ensure ensure new name
+        self.assertEqual(self.fs.ls(), [src, dst])
+
+    def testCopyDirNotFound(self):
+        dirname = 'doesnotexist'
+
+        # ensure dir does not exist
+        self.assertNotIn(dirname, self.fs.ls())
+
+        # ensure exception raised
+        self.assertRaises(NotFoundError, self.fs.mv, dirname, 'new')
+
+    def testCopyDirCollision(self):
+        src = 'old'
+        dst = 'new'
+
+        # create dirs
+        self.fs.mkdir(src)
+        self.fs.mkdir(dst)
+
+        # ensure dir exists
+        self.assertListEqual(self.fs.ls(), [src, dst])
+
+        # ensure exception raised
+        self.assertRaises(DirectoryAlreadyExistsError, self.fs.mv, src, dst)
+
+    def testCopyDirCollisionOverwrite(self):
+        src = 'old'
+        dst = 'new'
+        filename = 'sentinel'
+
+        # create dirs
+        self.fs.mkdir(src)
+        self.fs.mkdir(dst)
+
+        # ensure dirs exists
+        self.assertListEqual(self.fs.ls(), [src, dst])
+
+        # create a file in src to check for later
+        self.fs.pushdir(src)
+        self.fs.touch(filename)
+        self.assertIn(filename, self.fs.ls())
+        self.fs.popdir()
+
+        # move dir
+        self.fs.cp(src, dst, True)
+
+        # ensure dirs exist
+        self.assertListEqual(self.fs.ls(), [src, dst])
+
+        # change into old name and check for sentinel file
+        self.fs.pushdir(src)
+        self.assertIn(filename, self.fs.ls())
+        self.fs.popdir()
+
+        # change into new name and check for sentinel file
+        self.fs.pushdir(dst)
+        self.assertIn(filename, self.fs.ls())
+
+    def testCopyFile(self):
+        src = 'old'
+        dst = 'new'
+
+        # create file
+        self.fs.touch(src)
+
+        # ensure file exists
+        self.assertListEqual(self.fs.ls(), [src])
+
+        # move file
+        self.fs.cp(src, dst)
+
+        # ensure ensure new name
+        self.assertEqual(self.fs.ls(), [src, dst])
+
+    def testCopyFileNotFound(self):
+        filename = 'doesnotexist'
+
+        # ensure file does not exist
+        self.assertNotIn(filename, self.fs.ls())
+
+        # ensure exception raised
+        self.assertRaises(NotFoundError, self.fs.mv, filename, 'new')
+
+    def testCopyFileCollision(self):
+        src = 'old'
+        dst = 'new'
+
+        # create files
+        self.fs.touch(src)
+        self.fs.touch(dst)
+
+        # ensure file exists
+        self.assertListEqual(self.fs.ls(), [src, dst])
+
+        # ensure exception raised
+        self.assertRaises(FileAlreadyExistsError, self.fs.mv, src, dst)
+
+    def testCopyFileCollisionOverwrite(self):
+        src = 'old'
+        dst = 'new'
+        contents = 'sentinel'
+
+        # create files
+        self.fs.touch(src)
+        self.fs.touch(dst)
+
+        # ensure files exist
+        self.assertListEqual(self.fs.ls(), [src, dst])
+
+        # add contents to src to check for later
+        self.fs.write(src, contents)
+        self.assertEqual(self.fs.read(src), contents)
+
+        # move file
+        self.fs.cp(src, dst, True)
+
+        # ensure files exists
+        self.assertListEqual(self.fs.ls(), [src, dst])
+
+        # read old name and check for sentinel value
+        self.assertEqual(self.fs.read(src), contents)
+
+        # read new name and check for sentinel value
+        self.assertEqual(self.fs.read(dst), contents)
 
     def testFind(self):
         dirs = ['foo', 'bar', 'baz', 'bin']
