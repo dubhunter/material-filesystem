@@ -3,32 +3,40 @@ class FilesystemError(Exception):
 
 
 class NotFoundError(FilesystemError):
-    pass
+    def __init__(self, name):
+        super().__init__('"{}" does not exist'.format(name))
 
 
 class DirectoryNotEmptyError(FilesystemError):
-    pass
+    def __init__(self, name):
+        super().__init__('the directory "{}" is not empty'.format(name))
 
 
 class AlreadyExistsError(FilesystemError):
-    pass
+    def __init__(self, name):
+        super().__init__('"{}" already exists'.format(name))
 
 
 class DirectoryAlreadyExistsError(AlreadyExistsError):
-    pass
+    def __init__(self, name):
+        super().__init__('the directory "{}" already exists'.format(name))
 
 
 class FileAlreadyExistsError(AlreadyExistsError):
-    pass
+    def __init__(self, name):
+        super().__init__('the file "{}" already exists'.format(name))
 
 
 class NotFileError(FilesystemError):
-    pass
+    def __init__(self, name):
+        super().__init__('"{}" exists but is not a file'.format(name))
 
 
 class NotDirectoryError(FilesystemError):
-    pass
+    def __init__(self, name):
+        super().__init__('"{}" exists but is not a directory'.format(name))
 
 
 class RootError(FilesystemError):
-    pass
+    def __init__(self):
+        super().__init__('this action cannot be performed on root')
