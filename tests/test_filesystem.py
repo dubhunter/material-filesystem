@@ -595,6 +595,41 @@ class FilesystemTest(unittest.TestCase):
         # ensure exception raised
         self.assertRaises(DirectoryAlreadyExistsError, self.fs.touch, filename)
 
+    def testCreateFileAbsoluteRoot(self):
+        # ensure error
+        self.assertRaises(RootError, self.fs.touch, '/')
+
+    def testCreateFileAbsolute(self):
+        dirname = 'somedir'
+        filename = 'empty.txt'
+
+        # create dir
+        self.fs.mkdir(dirname)
+
+        # create file absolute without cd
+        self.fs.touch('/{}/{}'.format(dirname, filename))
+
+        # ensure still at root and ensure file does not exist
+        self.assertEqual(self.fs.pwd(), '/')
+        self.assertNotIn(filename, self.fs.ls())
+
+        # change into first
+        self.fs.pushdir(dirname)
+
+        # ensure file exists
+        self.assertIn(filename, self.fs.ls())
+
+    def testCreateFileAbsoluteError(self):
+        firstdir = 'somedir'
+        seconddir = 'foobar'
+        filename = 'foobar'
+
+        # create dirs
+        self.fs.mkdir('/{}/{}'.format(firstdir, seconddir), True)
+
+        # ensure exception raised
+        self.assertRaises(DirectoryAlreadyExistsError, self.fs.touch, '/{}/{}'.format(firstdir, filename))
+
     def testWriteReadFile(self):
         filename = 'lipsum.txt'
         contents = 'Lorem ipsum dolor sit amet'

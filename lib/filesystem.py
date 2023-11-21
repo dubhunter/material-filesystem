@@ -133,15 +133,18 @@ class Filesystem:
                 raise NotFoundError
 
     def touch(self, path: str):
-        if path in self._cwd.children:
-            node = self._cwd.children[path]
-            if node.type == 'Directory':
-                # error if a dir exists with the same name
-                raise DirectoryAlreadyExistsError
-            else:
-                # if it's a file, then  noop
-                return
-        self._cwd.children[path] = File()
+        if '/' in path:
+            self._absolute_action(path, self.touch)
+        else:
+            if path in self._cwd.children:
+                node = self._cwd.children[path]
+                if node.type == 'Directory':
+                    # error if a dir exists with the same name
+                    raise DirectoryAlreadyExistsError
+                else:
+                    # if it's a file, then  noop
+                    return
+            self._cwd.children[path] = File()
 
     def write(self, path: str, contents: str | Any):
         try:
