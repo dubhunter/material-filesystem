@@ -41,11 +41,12 @@ class FilesystemApp(cmd2.Cmd):
     ls_parser = cmd2.Cmd2ArgumentParser()
     ls_parser.add_argument('-l', action='store_true', dest='long',
                            help='show long list with type')
+    ls_parser.add_argument('path', nargs='?', help='path to list')
 
     @cmd2.with_argparser(ls_parser)
     def do_ls(self, args):
         """List current working directory"""
-        for item in self.fs.ls(args.long):
+        for item in self.fs.ls(args.path, args.long):
             if args.long:
                 # long results give us a tuple, but we only need the first letter of the type
                 self.poutput('{} {}'.format(item[0][:1], item[1]))

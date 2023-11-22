@@ -109,7 +109,7 @@ class Filesystem:
                 # creating root is a noop
                 return
             with self._resetting_stack(path) as path:
-                if create_intermediate:  # TODO: because of this case, we cannot use self._absolute_action()
+                if create_intermediate:  # TODO: because of this case, we cannot use self._absolute_child_action()
                     # start at root
                     self.cd('/')
                     # recurse for all the parts of the path with a filter for no empty strings
