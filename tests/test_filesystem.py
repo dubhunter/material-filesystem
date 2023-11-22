@@ -4,8 +4,10 @@ from lib.exceptions import (
     DirectoryAlreadyExistsError,
     DirectoryNotEmptyError,
     FileAlreadyExistsError,
+    NotDirectoryError,
     NotFileError,
-    NotFoundError, RootError
+    NotFoundError,
+    RootError
 )
 from lib.filesystem import Filesystem
 
@@ -45,6 +47,15 @@ class FilesystemTest(unittest.TestCase):
 
         # remove dir
         self.assertRaises(NotFoundError, self.fs.pushdir, dirname)
+
+    def testPushDirectoryFileError(self):
+        filename = 'somefile'
+
+        # create file
+        self.fs.touch(filename)
+
+        # remove dir
+        self.assertRaises(NotDirectoryError, self.fs.pushdir, filename)
 
     def testPopDirectory(self):
         dirname = 'somedir'
@@ -132,6 +143,15 @@ class FilesystemTest(unittest.TestCase):
 
         # remove dir
         self.assertRaises(NotFoundError, self.fs.cd, dirname)
+
+    def testChangeDirectoryFileError(self):
+        filename = 'somefile'
+
+        # create file
+        self.fs.touch(filename)
+
+        # remove dir
+        self.assertRaises(NotDirectoryError, self.fs.cd, filename)
 
     def testChangeDirectoryAbsolute(self):
         dirname = 'somedir'

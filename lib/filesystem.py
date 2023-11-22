@@ -5,8 +5,11 @@ from lib.exceptions import (
     DirectoryAlreadyExistsError,
     DirectoryNotEmptyError,
     FileAlreadyExistsError,
-    FilesystemError, NotFileError,
-    NotFoundError, RootError
+    FilesystemError,
+    NotDirectoryError,
+    NotFileError,
+    NotFoundError,
+    RootError
 )
 from lib.file import File
 
@@ -46,6 +49,8 @@ class Filesystem:
     def pushdir(self, directory: str):
         if directory not in self._cwd.children:
             raise NotFoundError(directory)
+        if self._cwd.children[directory].type != 'Directory':
+            raise NotDirectoryError(directory)
         self._stack.append(directory)
 
     def popdir(self):
