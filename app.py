@@ -23,6 +23,7 @@ class FilesystemApp(cmd2.Cmd):
         self._update_prompt()
 
     def _update_prompt(self):
+        # set the prompt to the cwd
         self.prompt = cmd2.style('{} $ '.format(self.fs.pwd()), bold=True, dim=True)
 
     cd_parser = cmd2.Cmd2ArgumentParser()
