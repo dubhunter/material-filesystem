@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 from typing import Any, List
 
 from lib.directory import Directory
@@ -28,23 +29,27 @@ class Filesystem:
             d = d.children[name]
         return d
 
-    def _absolute_action(self, path: str, action: callable, *args) -> Any:
+    @contextmanager
+    def _resetting_stack(self, path: str):
         # save the current stack to reset cwd
-        # the absolute case
+        old_stack = self._stack
+        try:
+            yield path
+        finally:
+            # make sure we put the old stack back
+            self._stack = old_stack
+
+    def _absolute_action(self, path: str, action: callable, *args) -> Any:
         if path == '/':
-            # you action on root
+            # you cannot action on root
             raise RootError
         # ensure there is no trailing slash
         path = path.rstrip('/')
-        old_stack = self._stack
-        try:
+        with self._resetting_stack(path) as path:
             # try to change to parent then act (or error)
             parent, child = path.rsplit('/', 1)
             self.cd(parent)
             return action(child, *args)
-        finally:
-            # make sure we put the old stack back
-            self._stack = old_stack
 
     def pushdir(self, directory: str):
         if directory not in self._cwd.children:
@@ -97,11 +102,7 @@ class Filesystem:
             if path == '/':
                 # creating root is a noop
                 return
-            # ensure there is no trailing slash
-            path = path.rstrip('/')
-            # save the current stack to reset cwd
-            old_stack = self._stack
-            try:
+            with self._resetting_stack(path) as path:
                 if create_intermediate:  # TODO: because of this case, we cannot use self._absolute_action()
                     # start at root
                     self.cd('/')
@@ -114,9 +115,6 @@ class Filesystem:
                     parent, child = path.rsplit('/', 1)
                     self.cd(parent)
                     self.mkdir(child)
-            finally:
-                # make sure we put the old stack back
-                self._stack = old_stack
         else:
             if path in self._cwd.children:
                 node = self._cwd.children[path]
