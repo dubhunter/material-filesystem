@@ -262,14 +262,46 @@ class FilesystemTest(unittest.TestCase):
         filename = 'somefile'
 
         # ensure initial ls is empty
-        self.assertListEqual(self.fs.ls(True), [])
+        self.assertListEqual(self.fs.ls(long=True), [])
 
         # create dir and file
         self.fs.mkdir(dirname)
         self.fs.touch(filename)
 
         # ensure both are in ls
-        self.assertListEqual(self.fs.ls(True), [('Directory', dirname), ('File', filename)])
+        self.assertListEqual(self.fs.ls(long=True), [('Directory', dirname), ('File', filename)])
+
+    def testListAbsolute(self):
+        dirname = 'somedir'
+        filename = 'somefile'
+
+        # create dir
+        self.fs.mkdir(dirname)
+
+        # create file in dir
+        self.fs.touch('/{}/{}'.format(dirname, filename))
+
+        # ensure file not in pwd ls
+        self.assertNotIn(filename, self.fs.ls())
+
+        # ensure file in absolute ls
+        self.assertIn(filename, self.fs.ls('/{}'.format(dirname)))
+
+    def testListAbsoluteLong(self):
+        dirname = 'somedir'
+        filename = 'somefile'
+
+        # create dir
+        self.fs.mkdir('/{}/{}'.format(dirname, dirname), True)
+
+        # create file in dir
+        self.fs.touch('/{}/{}/{}'.format(dirname, dirname, filename))
+
+        # ensure file not in pwd ls
+        self.assertNotIn(filename, self.fs.ls())
+
+        # ensure file in absolute ls
+        self.assertIn(filename, self.fs.ls('/{}/{}'.format(dirname, dirname)))
 
     def testMakeDir(self):
         dirname = 'somedir'

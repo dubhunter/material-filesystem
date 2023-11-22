@@ -88,13 +88,19 @@ class Filesystem:
     def pwd(self) -> str:
         return '/{}'.format('/'.join(self._stack))
 
-    def ls(self, long: bool = False) -> List:  # TODO: Support absolute paths
-        if long:
-            # return a tuple with the type
-            return [(v.type, k) for k, v in self._cwd.children.items()]
+    def ls(self, path: str = None, long: bool = False) -> List:
+        if path and '/' in path:
+            # the absolute case
+            with self._resetting_stack(path) as path:
+                self.cd(path)
+                return self.ls(long=long)
         else:
-            # just return the keys
-            return list(self._cwd.children.keys())
+            if long:
+                # return a tuple with the type
+                return [(v.type, k) for k, v in self._cwd.children.items()]
+            else:
+                # just return the keys
+                return list(self._cwd.children.keys())
 
     def mkdir(self, path: str, create_intermediate: bool = False):
         if '/' in path:
@@ -205,7 +211,7 @@ class Filesystem:
         except KeyError:
             raise NotFoundError(src)
 
-    def find(self, name: str, fuzzy: bool = False) -> List[str]:
+    def find(self, name: str, fuzzy: bool = False) -> List[str]:  # TODO: Support absolute paths
         results = []
         if fuzzy:
             for k in self.ls():
