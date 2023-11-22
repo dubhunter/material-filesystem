@@ -39,7 +39,7 @@ class Filesystem:
             # make sure we put the old stack back
             self._stack = old_stack
 
-    def _absolute_action(self, path: str, action: callable, *args) -> Any:
+    def _absolute_child_action(self, path: str, action: callable, *args) -> Any:
         if path == '/':
             # you cannot action on root
             raise RootError
@@ -128,7 +128,7 @@ class Filesystem:
 
     def rm(self, path: str, force: bool = False):
         if '/' in path:
-            self._absolute_action(path, self.rm, force)
+            self._absolute_child_action(path, self.rm, force)
         else:
             try:
                 node = self._cwd.children[path]
@@ -141,7 +141,7 @@ class Filesystem:
 
     def touch(self, path: str):
         if '/' in path:
-            self._absolute_action(path, self.touch)
+            self._absolute_child_action(path, self.touch)
         else:
             if path in self._cwd.children:
                 node = self._cwd.children[path]
@@ -155,7 +155,7 @@ class Filesystem:
 
     def write(self, path: str, contents: str | Any):
         if '/' in path:
-            self._absolute_action(path, self.write, contents)
+            self._absolute_child_action(path, self.write, contents)
         else:
             try:
                 node = self._cwd.children[path]
@@ -168,7 +168,7 @@ class Filesystem:
 
     def read(self, path: str) -> str | Any:
         if '/' in path:
-            return self._absolute_action(path, self.read)
+            return self._absolute_child_action(path, self.read)
         else:
             try:
                 node = self._cwd.children[path]
