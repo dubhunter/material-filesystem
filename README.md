@@ -44,6 +44,33 @@ Included is a command line app to interact with the filesystem.
 Run the app with:
 ```shell
 > make run
+
+/ $ mkdir school
+/ $ cd school
+/school $ pwd
+/school
+/school $ mkdir homework
+/school $ cd homework
+/school/homework $ mkdir math
+/school/homework $ mkdir lunch
+/school/homework $ mkdir history
+/school/homework $ mkdir spanish
+/school/homework $ rm lunch
+/school/homework $ ls -l
+D math
+D history
+D spanish
+/school/homework $ pwd
+/school/homework
+/school/homework $ cd ..
+/school $ mkdir cheatsheet
+/school $ ls -l
+D homework
+D cheatsheet
+/school $ rm cheatsheet
+/school $ cd ..
+/ $ pwd
+/
 ```
 
 ### Help
