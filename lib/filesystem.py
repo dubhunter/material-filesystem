@@ -32,11 +32,11 @@ class Filesystem:
         return d
 
     @contextmanager
-    def _resetting_stack(self, path: str):
+    def _resetting_stack(self):
         # save the current stack to reset cwd
-        old_stack = self._stack
+        old_stack = self._stack.copy()
         try:
-            yield path
+            yield
         finally:
             # make sure we put the old stack back
             self._stack = old_stack
@@ -47,10 +47,10 @@ class Filesystem:
             raise RootError
         # ensure there is no trailing slash
         path = path.rstrip('/')
-        with self._resetting_stack(path) as path:
+        with self._resetting_stack():
             # try to change to parent then act (or error)
             parent, child = path.rsplit('/', 1)
-            self.cd(parent)
+            self.cd(parent if parent else '/')
             return action(child, *args)
 
     def pushdir(self, directory: str):
@@ -93,7 +93,7 @@ class Filesystem:
     def ls(self, path: str = None, long: bool = False) -> List:
         if path and '/' in path:
             # the absolute case
-            with self._resetting_stack(path) as path:
+            with self._resetting_stack():
                 self.cd(path)
                 return self.ls(long=long)
         else:
@@ -110,7 +110,7 @@ class Filesystem:
             if path == '/':
                 # creating root is a noop
                 return
-            with self._resetting_stack(path) as path:
+            with self._resetting_stack():
                 if create_intermediate:  # TODO: because of this case, we cannot use self._absolute_child_action()
                     # start at root
                     self.cd('/')
@@ -121,7 +121,7 @@ class Filesystem:
                 else:
                     # if we aren't creating intermediates, try to change to parent then create (or error)
                     parent, child = path.rsplit('/', 1)
-                    self.cd(parent)
+                    self.cd(parent if parent else '/')
                     self.mkdir(child)
         else:
             if path in self._cwd.children:
@@ -213,14 +213,14 @@ class Filesystem:
         except KeyError:
             raise NotFoundError(src)
 
-    def find(self, name: str, fuzzy: bool = False) -> List[str]:  # TODO: Support absolute paths
+    def find(self, name: str, fuzzy: bool = False, recursive: bool = False) -> List[str]:
         results = []
-        if fuzzy:
-            for k in self.ls():
-                if name in k:
-                    results.append(k)
-        else:
-            # if not fuzzy, hopefully this is more performant than iteration
-            if name in self.ls():
-                results.append(name)
-        return results
+        for k, v in self._cwd.children.items():
+            if (fuzzy and name in k) or name == k:
+                results.append('{}/{}'.format(self.pwd().rstrip('/'), k))
+            if recursive and v.type == Node.TYPE_DIRECTORY:
+                with self._resetting_stack():
+                    self.pushdir(k)
+                    results.extend(self.find(name, fuzzy, recursive))
+        # sort alphabetically with deeper paths later
+        return sorted(sorted(results), key=lambda p: (p.count(os.path.sep), p))

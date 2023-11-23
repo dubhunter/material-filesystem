@@ -1088,7 +1088,7 @@ class FilesystemTest(unittest.TestCase):
         self.assertListEqual(self.fs.ls(), dirs)
 
         # ensure dir found
-        self.assertListEqual(self.fs.find('baz'), ['baz'])
+        self.assertListEqual(self.fs.find('baz'), ['/baz'])
 
     def testFindNotFound(self):
         dirs = ['foo', 'bar', 'baz', 'bin']
@@ -1114,4 +1114,44 @@ class FilesystemTest(unittest.TestCase):
         self.assertListEqual(self.fs.ls(), dirs)
 
         # ensure dir found
-        self.assertListEqual(self.fs.find('bar', True), ['foobar', 'barbaz'])
+        self.assertListEqual(self.fs.find('bar', True), ['/barbaz', '/foobar'])
+
+    def testFindRecursive(self):
+        dirname = 'somedir'
+        filename = 'somefile'
+
+        # create some dirs
+        self.fs.mkdir('/{}/{}'.format(dirname, dirname), True)
+
+        # create some files
+        self.fs.touch('/{}'. format(filename))
+        self.fs.touch('/{}/{}'. format(dirname, filename))
+        self.fs.touch('/{}/{}/{}'. format(dirname, dirname, filename))
+
+        # ensure files found at all levels
+        self.assertListEqual(self.fs.find(filename, recursive=True), [
+            '/{}'.format(filename),
+            '/{}/{}'.format(dirname, filename),
+            '/{}/{}/{}'.format(dirname, dirname, filename),
+        ])
+
+    def testFindFuzzyRecursive(self):
+        dirname = 'somedir'
+        filename = 'somefile'
+
+        # create some dirs
+        self.fs.mkdir('/{}/{}'.format(dirname, dirname), True)
+
+        # create some files
+        self.fs.touch('/{}'. format(filename))
+        self.fs.touch('/{}/{}'. format(dirname, filename))
+        self.fs.touch('/{}/{}/{}'. format(dirname, dirname, filename))
+
+        # ensure files found at all levels
+        self.assertListEqual(self.fs.find('some', fuzzy=True, recursive=True), [
+            '/{}'.format(dirname),
+            '/{}'.format(filename),
+            '/{}/{}'.format(dirname, dirname),
+            '/{}/{}'.format(dirname, filename),
+            '/{}/{}/{}'.format(dirname, dirname, filename),
+        ])

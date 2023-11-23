@@ -120,12 +120,13 @@ class FilesystemApp(cmd2.Cmd):
 
     find_parser = cmd2.Cmd2ArgumentParser()
     find_parser.add_argument('-x', action='store_true', dest='fuzzy', help='fuzzy search')
+    find_parser.add_argument('-r', action='store_true', dest='recursive', help='recursive search')
     find_parser.add_argument('path', help='path to remove')
 
     @cmd2.with_argparser(find_parser)
     def do_find(self, args):
         """Find a file or directory"""
-        for item in self.fs.find(args.path, args.fuzzy):
+        for item in self.fs.find(args.path, args.fuzzy, args.recursive):
             self.poutput(item)
 
 
