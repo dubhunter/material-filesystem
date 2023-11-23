@@ -44,7 +44,9 @@ Included is a command line app to interact with the filesystem.
 Run the app with:
 ```shell
 > make run
-
+```
+#### Example
+```shell
 / $ mkdir school
 / $ cd school
 /school $ pwd
