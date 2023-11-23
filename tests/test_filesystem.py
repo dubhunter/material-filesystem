@@ -186,6 +186,27 @@ class FilesystemTest(unittest.TestCase):
         # ensure subdir PWD
         self.assertEqual(self.fs.pwd(), '/{}/{}'.format(dirname, dirname))
 
+    def testChangeDirectoryDeep(self):
+        firstdir = 'first'
+        seconddir = 'second'
+        thirddir = 'third'
+
+        # ensure root PWD
+        self.assertEqual(self.fs.pwd(), '/')
+
+        # create & change dir
+        self.fs.mkdir('/{}/{}/{}'.format(firstdir, seconddir, thirddir), True)
+        self.fs.cd(firstdir)
+
+        # ensure dir PWD
+        self.assertEqual(self.fs.pwd(), '/{}'.format(firstdir))
+
+        # change dir to third, relative to cwd
+        self.fs.cd('{}/{}'.format(seconddir, thirddir))
+
+        # ensure subdir PWD
+        self.assertEqual(self.fs.pwd(), '/{}/{}/{}'.format(firstdir, seconddir, thirddir))
+
     def testChangeDirectoryAbsoluteNotFound(self):
         dirname = 'somedir'
 
@@ -821,7 +842,7 @@ class FilesystemTest(unittest.TestCase):
         self.fs.mv(src, dst)
 
         # ensure ensure new name
-        self.assertEqual(self.fs.ls(), [dst])
+        self.assertListEqual(self.fs.ls(), [dst])
 
     def testMoveDirNotFound(self):
         dirname = 'doesnotexist'
@@ -874,6 +895,29 @@ class FilesystemTest(unittest.TestCase):
         self.fs.pushdir(dst)
         self.assertIn(filename, self.fs.ls())
 
+    def testMoveDirAbsolute(self):
+        parent = 'somedir'
+        src = 'old'
+        dst = 'new'
+
+        # create dir
+        self.fs.mkdir('/{}/{}'.format(parent, src), True)
+
+        # ensure parent exists
+        self.assertListEqual(self.fs.ls(), [parent])
+
+        # ensure dir exists
+        self.assertListEqual(self.fs.ls(parent), [src])
+
+        # move dir
+        self.fs.mv('/{}/{}'.format(parent, src), '/{}/{}'.format(parent, dst))
+
+        # ensure ensure new name
+        self.assertListEqual(self.fs.ls(parent), [dst])
+
+    def testMoveRootError(self):
+        self.assertRaises(RootError, self.fs.mv, '/', '/foo')
+
     def testMoveFile(self):
         src = 'old'
         dst = 'new'
@@ -888,7 +932,7 @@ class FilesystemTest(unittest.TestCase):
         self.fs.mv(src, dst)
 
         # ensure ensure new name
-        self.assertEqual(self.fs.ls(), [dst])
+        self.assertListEqual(self.fs.ls(), [dst])
 
     def testMoveFileNotFound(self):
         filename = 'doesnotexist'
@@ -937,6 +981,33 @@ class FilesystemTest(unittest.TestCase):
 
         # read new name and check for sentinel value
         self.assertEqual(self.fs.read(dst), contents)
+
+    def testMoveFileAbsolute(self):
+        parent = 'somedir'
+        src = 'old'
+        dst = 'new'
+        contents = 'sentinel'
+
+        # create parent dir
+        self.fs.mkdir(parent)
+
+        # create file
+        self.fs.touch('/{}/{}'.format(parent, src))
+
+        # write to file
+        self.fs.write('/{}/{}'.format(parent, src), contents)
+
+        # ensure file exists
+        self.assertListEqual(self.fs.ls(parent), [src])
+
+        # move file
+        self.fs.mv('/{}/{}'.format(parent, src), '/{}/{}'.format(parent, dst))
+
+        # ensure ensure new name
+        self.assertListEqual(self.fs.ls(parent), [dst])
+
+        # read new name and check for sentinel value
+        self.assertEqual(self.fs.read('/{}/{}'.format(parent, dst)), contents)
 
     def testCopyDir(self):
         src = 'old'
@@ -1020,6 +1091,26 @@ class FilesystemTest(unittest.TestCase):
         self.fs.pushdir(dst)
         self.assertIn(filename, self.fs.ls())
 
+    def testCopyDirAbsolute(self):
+        parent = 'somedir'
+        src = 'old'
+        dst = 'new'
+
+        # create dir
+        self.fs.mkdir('/{}/{}'.format(parent, src), True)
+
+        # ensure parent exists
+        self.assertListEqual(self.fs.ls(), [parent])
+
+        # ensure dir exists
+        self.assertListEqual(self.fs.ls(parent), [src])
+
+        # move dir
+        self.fs.cp('/{}/{}'.format(parent, src), '/{}/{}'.format(parent, dst))
+
+        # ensure ensure new name
+        self.assertListEqual(self.fs.ls(parent), [src, dst])
+
     def testCopyFile(self):
         src = 'old'
         dst = 'new'
@@ -1096,6 +1187,33 @@ class FilesystemTest(unittest.TestCase):
 
         # read new name and check for sentinel value
         self.assertEqual(self.fs.read(dst), contents)
+
+    def testCopyFileAbsolute(self):
+        parent = 'somedir'
+        src = 'old'
+        dst = 'new'
+        contents = 'sentinel'
+
+        # create parent dir
+        self.fs.mkdir(parent)
+
+        # create file
+        self.fs.touch('/{}/{}'.format(parent, src))
+
+        # write to file
+        self.fs.write('/{}/{}'.format(parent, src), contents)
+
+        # ensure file exists
+        self.assertListEqual(self.fs.ls(parent), [src])
+
+        # move file
+        self.fs.cp('/{}/{}'.format(parent, src), '/{}/{}'.format(parent, dst))
+
+        # ensure ensure new name
+        self.assertListEqual(self.fs.ls(parent), [src, dst])
+
+        # read new name and check for sentinel value
+        self.assertEqual(self.fs.read('/{}/{}'.format(parent, dst)), contents)
 
     def testFind(self):
         dirs = ['foo', 'bar', 'baz', 'bin']

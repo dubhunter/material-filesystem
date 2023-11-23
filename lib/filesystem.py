@@ -42,7 +42,7 @@ class Filesystem:
             # make sure we put the old stack back
             self._stack = old_stack
 
-    def _absolute_child_action(self, path: str, action: callable, *args) -> Any:
+    def _deep_child_action(self, path: str, action: callable, *args) -> Any:
         if path == '/':
             # you cannot action on root
             raise RootError
@@ -75,14 +75,15 @@ class Filesystem:
         elif '/' not in path:
             self.pushdir(path)
         else:
-            # the absolute case
             # save the current stack in case we hit an exception
             old_stack = self._stack
-            self._stack = []
+            if path.startswith('/'):
+                # the absolute case, start at root
+                self._stack = []
             try:
                 # push all the parts of the path with a filter for no empty strings
                 for d in filter(None, path.split('/')):
-                    self.pushdir(d)
+                    self.cd(d)
             except FilesystemError as e:
                 # if we hit an exception we want to put the old stack back
                 self._stack = old_stack
@@ -92,8 +93,8 @@ class Filesystem:
         return '/{}'.format('/'.join(self._stack))
 
     def ls(self, path: str = None, long: bool = False) -> List:
-        if path and '/' in path:
-            # the absolute case
+        if path:
+            # the absolute/deep case
             with self._resetting_stack():
                 self.cd(path)
                 return self.ls(long=long)
@@ -107,14 +108,12 @@ class Filesystem:
 
     def mkdir(self, path: str, create_intermediate: bool = False):
         if '/' in path:
-            # the absolute case
+            # the absolute/deep case
             if path == '/':
                 # creating root is a noop
                 return
             with self._resetting_stack():
-                if create_intermediate:  # TODO: because of this case, we cannot use self._absolute_child_action()
-                    # start at root
-                    self.cd('/')
+                if create_intermediate:  # TODO: because of this case, we cannot use self._deep_child_action()
                     # recurse for all the parts of the path with a filter for no empty strings
                     for d in filter(None, path.split('/')):
                         self.mkdir(d)
@@ -137,7 +136,7 @@ class Filesystem:
 
     def rm(self, path: str, force: bool = False):
         if '/' in path:
-            self._absolute_child_action(path, self.rm, force)
+            self._deep_child_action(path, self.rm, force)
         else:
             try:
                 node = self._cwd.children[path]
@@ -150,7 +149,7 @@ class Filesystem:
 
     def touch(self, path: str):
         if '/' in path:
-            self._absolute_child_action(path, self.touch)
+            self._deep_child_action(path, self.touch)
         else:
             if path in self._cwd.children:
                 node = self._cwd.children[path]
@@ -164,7 +163,7 @@ class Filesystem:
 
     def write(self, path: str, contents: str | Any):
         if '/' in path:
-            self._absolute_child_action(path, self.write, contents)
+            self._deep_child_action(path, self.write, contents)
         else:
             try:
                 node = self._cwd.children[path]
@@ -177,7 +176,7 @@ class Filesystem:
 
     def read(self, path: str) -> str | Any:
         if '/' in path:
-            return self._absolute_child_action(path, self.read)
+            return self._deep_child_action(path, self.read)
         else:
             try:
                 node = self._cwd.children[path]
@@ -188,33 +187,50 @@ class Filesystem:
             except KeyError:
                 raise NotFoundError(path)
 
-    def mv(self, src: str, dst: str, force: bool = False):  # TODO: Support absolute paths
-        if not force and dst in self._cwd.children:
-    def mv(self, src: str, dst: str, force_overwrite: bool = False):  # TODO: Support absolute paths
-        if not force_overwrite and dst in self._cwd.children:
-            # don't allow overwriting unless forced
-            node = self._cwd.children[dst]
-            if node.type == Node.TYPE_FILE:
-                raise FileAlreadyExistsError(dst)
-            elif node.type == Node.TYPE_DIRECTORY:
-                raise DirectoryAlreadyExistsError(dst)
+    def _move_copy_helper(self, src: str, dst: str, src_func, force_overwrite: bool = False):
+        if not force_overwrite:
+            with self._resetting_stack():
+                if '/' in dst:
+                    # try to change to parent then act (or error)
+                    dst_parent, dst_child = dst.rsplit('/', 1)
+                    self.cd(dst_parent if dst_parent else '/')
+                else:
+                    dst_child = dst
+                if dst_child in self._cwd.children:
+                    # don't allow overwriting unless forced
+                    node = self._cwd.children[dst]
+                    if node.type == Node.TYPE_FILE:
+                        raise FileAlreadyExistsError(dst)
+                    elif node.type == Node.TYPE_DIRECTORY:
+                        raise DirectoryAlreadyExistsError(dst)
         try:
-            self._cwd.children[dst] = self._cwd.children.pop(src)
+            with self._resetting_stack():
+                if '/' in src:
+                    # try to change to parent then act (or error)
+                    src_parent, src_child = src.rsplit('/', 1)
+                    self.cd(src_parent if src_parent else '/')
+                else:
+                    src_child = src
+                src_node = src_func(self._cwd.children, src_child)
+            with self._resetting_stack():
+                if '/' in dst:
+                    # try to change to parent then act (or error)
+                    dst_parent, dst_child = dst.rsplit('/', 1)
+                    self.cd(dst_parent if dst_parent else '/')
+                else:
+                    dst_child = dst
+                self._cwd.children[dst_child] = src_node
         except KeyError:
             raise NotFoundError(src)
 
-    def cp(self, src: str, dst: str, force_overwrite: bool = False):  # TODO: Support absolute paths
-        if not force_overwrite and dst in self._cwd.children:
-            # don't allow overwriting unless forced
-            node = self._cwd.children[dst]
-            if node.type == Node.TYPE_FILE:
-                raise FileAlreadyExistsError(dst)
-            elif node.type == Node.TYPE_DIRECTORY:
-                raise DirectoryAlreadyExistsError(dst)
-        try:
-            self._cwd.children[dst] = copy.deepcopy(self._cwd.children[src])
-        except KeyError:
-            raise NotFoundError(src)
+    def mv(self, src: str, dst: str, force_overwrite: bool = False):
+        if src == '/':
+            # you cannot move root
+            raise RootError
+        self._move_copy_helper(src, dst, lambda c, s: c.pop(s), force_overwrite)
+
+    def cp(self, src: str, dst: str, force_overwrite: bool = False):
+        self._move_copy_helper(src, dst, lambda c, s: copy.deepcopy(c[s]), force_overwrite)
 
     def find(self, name: str, fuzzy: bool = False, recursive: bool = False) -> List[str]:
         results = []
