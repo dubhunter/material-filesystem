@@ -11,7 +11,7 @@ In memory filesystem coding challenge.
 ## Wishes
 I took a stab at soft/hard links, and while hard links seem easy, my design makes soft links much harder.
 This is largely due to the nodes not having any visibility into the rest of the filesystem.
-I have started a branch for links for discussion. 
+I have started a [branch](https://github.com/dubhunter/material-filesystem/tree/links) for links for discussion. 
 
 ## Library
 ```python
