@@ -2,6 +2,7 @@
 import unittest
 
 from lib.directory import Directory
+from lib.node import Node
 
 
 class DirectoryTests(unittest.TestCase):
@@ -12,7 +13,7 @@ class DirectoryTests(unittest.TestCase):
         self.d = Directory()
 
     def testType(self):
-        self.assertEqual(self.d.type, 'Directory')
+        self.assertEqual(self.d.type, Node.TYPE_DIRECTORY)
 
     def testChildren(self):
         self.assertDictEqual(self.d.children, {})

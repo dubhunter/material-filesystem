@@ -1,3 +1,4 @@
+import os
 from contextlib import contextmanager
 from typing import Any, List
 
@@ -13,6 +14,7 @@ from lib.exceptions import (
     RootError
 )
 from lib.file import File
+from lib.node import Node
 
 
 class Filesystem:
@@ -54,7 +56,7 @@ class Filesystem:
     def pushdir(self, directory: str):
         if directory not in self._cwd.children:
             raise NotFoundError(directory)
-        if self._cwd.children[directory].type != 'Directory':
+        if self._cwd.children[directory].type != Node.TYPE_DIRECTORY:
             raise NotDirectoryError(directory)
         self._stack.append(directory)
 
@@ -124,7 +126,7 @@ class Filesystem:
         else:
             if path in self._cwd.children:
                 node = self._cwd.children[path]
-                if node.type == 'File':
+                if node.type == Node.TYPE_FILE:
                     # error if a file exists with the same name
                     raise FileAlreadyExistsError(path)
                 else:
@@ -139,7 +141,7 @@ class Filesystem:
             try:
                 node = self._cwd.children[path]
                 # don't allow removing non-empty dirs unless forced (rm -f)
-                if not force and node.type == 'Directory' and len(node.children) > 0:
+                if not force and node.type == Node.TYPE_DIRECTORY and len(node.children) > 0:
                     raise DirectoryNotEmptyError(path)
                 del self._cwd.children[path]
             except KeyError:
@@ -151,7 +153,7 @@ class Filesystem:
         else:
             if path in self._cwd.children:
                 node = self._cwd.children[path]
-                if node.type == 'Directory':
+                if node.type == Node.TYPE_DIRECTORY:
                     # error if a dir exists with the same name
                     raise DirectoryAlreadyExistsError(path)
                 else:
@@ -165,7 +167,7 @@ class Filesystem:
         else:
             try:
                 node = self._cwd.children[path]
-                if node.type != 'File':
+                if node.type != Node.TYPE_FILE:
                     # error if the name exists, but is not a file
                     raise NotFileError(path)
                 node.contents = contents
@@ -178,7 +180,7 @@ class Filesystem:
         else:
             try:
                 node = self._cwd.children[path]
-                if node.type != 'File':
+                if node.type != Node.TYPE_FILE:
                     # error if the name exists, but is not a file
                     raise NotFileError(path)
                 return node.contents
@@ -189,9 +191,9 @@ class Filesystem:
         if not force and dst in self._cwd.children:
             # don't allow overwriting unless forced
             node = self._cwd.children[dst]
-            if node.type == 'File':
+            if node.type == Node.TYPE_FILE:
                 raise FileAlreadyExistsError(dst)
-            elif node.type == 'Directory':
+            elif node.type == Node.TYPE_DIRECTORY:
                 raise DirectoryAlreadyExistsError(dst)
         try:
             self._cwd.children[dst] = self._cwd.children.pop(src)
@@ -202,9 +204,9 @@ class Filesystem:
         if not force and dst in self._cwd.children:
             # don't allow overwriting unless forced
             node = self._cwd.children[dst]
-            if node.type == 'File':
+            if node.type == Node.TYPE_FILE:
                 raise FileAlreadyExistsError(dst)
-            elif node.type == 'Directory':
+            elif node.type == Node.TYPE_DIRECTORY:
                 raise DirectoryAlreadyExistsError(dst)
         try:
             self._cwd.children[dst] = self._cwd.children[src]

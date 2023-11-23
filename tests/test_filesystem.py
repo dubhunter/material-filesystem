@@ -10,6 +10,7 @@ from lib.exceptions import (
     RootError
 )
 from lib.filesystem import Filesystem
+from lib.node import Node
 
 
 class FilesystemTest(unittest.TestCase):
@@ -269,7 +270,7 @@ class FilesystemTest(unittest.TestCase):
         self.fs.touch(filename)
 
         # ensure both are in ls
-        self.assertListEqual(self.fs.ls(long=True), [('Directory', dirname), ('File', filename)])
+        self.assertListEqual(self.fs.ls(long=True), [(Node.TYPE_DIRECTORY, dirname), (Node.TYPE_FILE, filename)])
 
     def testListAbsolute(self):
         dirname = 'somedir'
