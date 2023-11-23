@@ -1,3 +1,4 @@
+import copy
 import os
 from contextlib import contextmanager
 from typing import Any, List
@@ -209,7 +210,7 @@ class Filesystem:
             elif node.type == Node.TYPE_DIRECTORY:
                 raise DirectoryAlreadyExistsError(dst)
         try:
-            self._cwd.children[dst] = self._cwd.children[src]
+            self._cwd.children[dst] = copy.deepcopy(self._cwd.children[src])
         except KeyError:
             raise NotFoundError(src)
 

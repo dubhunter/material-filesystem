@@ -941,6 +941,7 @@ class FilesystemTest(unittest.TestCase):
     def testCopyDir(self):
         src = 'old'
         dst = 'new'
+        filename = 'somefile'
 
         # create dir
         self.fs.mkdir(src)
@@ -953,6 +954,15 @@ class FilesystemTest(unittest.TestCase):
 
         # ensure ensure new name
         self.assertEqual(self.fs.ls(), [src, dst])
+
+        # add file to src
+        self.fs.touch('/{}/{}'.format(src, filename))
+
+        # ensure file in src
+        self.assertIn(filename, self.fs.ls('/{}'.format(src)))
+
+        # ensure file not in dst
+        self.assertNotIn(filename, self.fs.ls('/{}'.format(dst)))
 
     def testCopyDirNotFound(self):
         dirname = 'doesnotexist'
@@ -1013,6 +1023,7 @@ class FilesystemTest(unittest.TestCase):
     def testCopyFile(self):
         src = 'old'
         dst = 'new'
+        contents = 'foobar'
 
         # create file
         self.fs.touch(src)
@@ -1025,6 +1036,15 @@ class FilesystemTest(unittest.TestCase):
 
         # ensure ensure new name
         self.assertEqual(self.fs.ls(), [src, dst])
+
+        # add contents to src
+        self.fs.write(src, contents)
+
+        # ensure contents in src
+        self.assertEqual(self.fs.read(src), contents)
+
+        # ensure contents not in dst
+        self.assertNotEqual(self.fs.read(dst), contents)
 
     def testCopyFileNotFound(self):
         filename = 'doesnotexist'
