@@ -76,7 +76,7 @@ class Filesystem:
             self.pushdir(path)
         else:
             # save the current stack in case we hit an exception
-            old_stack = self._stack
+            old_stack = self._stack.copy()
             if path.startswith('/'):
                 # the absolute case, start at root
                 self._stack = []
@@ -187,7 +187,7 @@ class Filesystem:
             except KeyError:
                 raise NotFoundError(path)
 
-    def _move_copy_helper(self, src: str, dst: str, src_func, force_overwrite: bool = False):
+    def _move_copy_helper(self, src: str, dst: str, src_func: callable, force_overwrite: bool = False):
         if not force_overwrite:
             with self._resetting_stack():
                 if '/' in dst:
