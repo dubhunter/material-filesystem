@@ -45,7 +45,31 @@ Run the app with:
 ```shell
 > make run
 ```
-#### Example
+
+### Help
+List available commands with: 
+```shell
+/ $ help -v
+
+Documented commands (use 'help -v' for verbose/'help <topic>' for details):
+======================================================================================================
+cd                    Change directory
+cp                    Copy a file or directory
+find                  Find a file or directory
+help                  List available commands or provide detailed help for a specific command
+history               View, run, edit, save, or clear previously entered commands
+ls                    List current working directory
+mkdir                 Make a directory
+mv                    Move a file or directory
+pwd                   Print working directory
+quit                  Exit this application
+read                  Read a file
+rm                    Remove a file or directory
+touch                 Create a file
+write                 Write to a file
+```
+
+### Example
 ```shell
 / $ mkdir school
 / $ cd school
@@ -73,29 +97,6 @@ D cheatsheet
 /school $ cd ..
 / $ pwd
 /
-```
-
-### Help
-List available commands with: 
-```shell
-/ $ help -v
-
-Documented commands (use 'help -v' for verbose/'help <topic>' for details):
-======================================================================================================
-cd                    Change directory
-cp                    Copy a file or directory
-find                  Find a file or directory
-help                  List available commands or provide detailed help for a specific command
-history               View, run, edit, save, or clear previously entered commands
-ls                    List current working directory
-mkdir                 Make a directory
-mv                    Move a file or directory
-pwd                   Print working directory
-quit                  Exit this application
-read                  Read a file
-rm                    Remove a file or directory
-touch                 Create a file
-write                 Write to a file
 ```
 
 ## Tests
