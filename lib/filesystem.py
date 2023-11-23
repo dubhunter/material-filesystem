@@ -190,6 +190,8 @@ class Filesystem:
 
     def mv(self, src: str, dst: str, force: bool = False):  # TODO: Support absolute paths
         if not force and dst in self._cwd.children:
+    def mv(self, src: str, dst: str, force_overwrite: bool = False):  # TODO: Support absolute paths
+        if not force_overwrite and dst in self._cwd.children:
             # don't allow overwriting unless forced
             node = self._cwd.children[dst]
             if node.type == Node.TYPE_FILE:
@@ -201,8 +203,8 @@ class Filesystem:
         except KeyError:
             raise NotFoundError(src)
 
-    def cp(self, src: str, dst: str, force: bool = False):  # TODO: Support absolute paths
-        if not force and dst in self._cwd.children:
+    def cp(self, src: str, dst: str, force_overwrite: bool = False):  # TODO: Support absolute paths
+        if not force_overwrite and dst in self._cwd.children:
             # don't allow overwriting unless forced
             node = self._cwd.children[dst]
             if node.type == Node.TYPE_FILE:

@@ -99,24 +99,24 @@ class FilesystemApp(cmd2.Cmd):
         self.poutput(self.fs.read(args.path))
 
     mv_parser = cmd2.Cmd2ArgumentParser()
-    mv_parser.add_argument('-f', action='store_true', dest='force', help='force overwrite')
+    mv_parser.add_argument('-f', action='store_true', dest='force_overwrite', help='force overwrite')
     mv_parser.add_argument('src', help='path to source')
     mv_parser.add_argument('dst', help='path to destination')
 
     @cmd2.with_argparser(mv_parser)
     def do_mv(self, args):
         """Move a file or directory"""
-        self.fs.mv(args.src, args.dst, args.force)
+        self.fs.mv(args.src, args.dst, args.force_overwrite)
 
     cp_parser = cmd2.Cmd2ArgumentParser()
-    cp_parser.add_argument('-f', action='store_true', dest='force', help='force overwrite')
+    cp_parser.add_argument('-f', action='store_true', dest='force_overwrite', help='force overwrite')
     cp_parser.add_argument('src', help='path to source')
     cp_parser.add_argument('dst', help='path to destination')
 
     @cmd2.with_argparser(cp_parser)
     def do_cp(self, args):
         """Copy a file or directory"""
-        self.fs.cp(args.src, args.dst, args.force)
+        self.fs.cp(args.src, args.dst, args.force_overwrite)
 
     find_parser = cmd2.Cmd2ArgumentParser()
     find_parser.add_argument('-x', action='store_true', dest='fuzzy', help='fuzzy search')
