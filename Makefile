@@ -1,4 +1,4 @@
-.PHONY: run clean
+.PHONY: run test coverage clean
 
 VENV = venv
 PYTHON = $(VENV)/bin/python3
